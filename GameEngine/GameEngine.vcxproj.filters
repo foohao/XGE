@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\_Main">
+      <UniqueIdentifier>{5d3ada47-e2cd-4e81-91a6-ea7bab9cb1ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\_Main">
+      <UniqueIdentifier>{64b2c02b-c666-4e11-9ba4-a0ae28c95c10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\ErrorHandler">
+      <UniqueIdentifier>{41ea3f62-19f8-4eef-b8f3-50e213cffd70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\ErrorHandler">
+      <UniqueIdentifier>{df686f2f-8f03-4131-9615-ff20c12c489d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Core">
+      <UniqueIdentifier>{f93711a4-c5d1-4813-a3b6-6eac5a4d18f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Core">
+      <UniqueIdentifier>{e33c1e2d-487d-427f-a0ce-63a1d56cf9d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\GameOGL">
+      <UniqueIdentifier>{6d78e9d5-89c7-4194-a43a-ff834f594914}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\GameOGL">
+      <UniqueIdentifier>{f132f4c0-6a7b-4425-9cd2-9b39880e66b9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="_Main\main.cpp">
+      <Filter>源文件\_Main</Filter>
+    </ClCompile>
+    <ClCompile Include="_Main\stdafx.cpp">
+      <Filter>源文件\_Main</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorHandler\ErrorHandler.cpp">
+      <Filter>源文件\ErrorHandler</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Core.cpp">
+      <Filter>源文件\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="GameOGL\GameOGL.cpp">
+      <Filter>源文件\GameOGL</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="_Main\stdafx.h">
+      <Filter>头文件\_Main</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorHandler\ErrorHandler.h">
+      <Filter>头文件\ErrorHandler</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Core.h">
+      <Filter>头文件\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="GameOGL\GameOGL.h">
+      <Filter>头文件\GameOGL</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
