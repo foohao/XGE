@@ -205,6 +205,28 @@ double GameOGL::GetTimePerformanceRegular(void) {
     return dDeltaTime;
 }
 
+LRESULT GameOGL::WndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
+    GameOGL *pWnd = NULL;
+    static bool bProcessed = false;
+    switch (iMsg) {
+    case WM_NCCREATE:
+    {
+        SetWindowLong(hWnd, GWL_USERDATA, long(LPCREATESTRUCT(lParam)->lpCreateParams));
+        break;
+    }
+    default:
+        pWnd = (GameOGL*)GetWindowLong(hWnd, GWL_USERDATA);
+        if (NULL != pWnd) {
+            bProcessed = pWnd->MsgHandler(iMsg, wParam, lParam);
+        }
+    }
+
+    if (!bProcessed) {
+        return DefWindowProc(hWnd, iMsg, wParam, lParam);
+    }
+    return 0;
+}
+
 // Convert a number range from 0 to 255 to a number range from 0 to 1
 float GameOGL::ConvertColor(int iColor) {
     if (iColor >= 255) {
@@ -215,4 +237,42 @@ float GameOGL::ConvertColor(int iColor) {
         return float(iColor) / 255.f;
     }
     return 0.0f;
+}
+
+void GameOGL::DestroyWnd() {
+
+    if (!m_pWndParam)
+        return;
+
+    // Reset screen mode back to desktop settings
+    if (m_pWndParam->bIsFullScreen) {
+        ChangeDisplaySettings(NULL, 0);
+    }
+
+    // Deselect OpenGL rendering context
+    if (m_pWndParam->hDC) {
+        wglMakeCurrent(m_pWndParam->hDC, NULL);
+    }
+
+    // Delete the OpenGL context
+    if (m_hGLRC) {
+        wglDeleteContext(m_hGLRC);
+        m_hGLRC = NULL;
+    }
+
+    // Free memory for DC
+    if (m_pWndParam->hWnd && m_pWndParam->hDC) {
+        ReleaseDC(m_pWndParam->hWnd, m_pWndParam->hDC);
+        m_pWndParam->hDC = NULL;
+    }
+
+    if (m_pWndParam->hWnd) {
+        DestroyWindow(m_pWndParam->hWnd);
+        m_pWndParam->hWnd = NULL;
+    }
+
+    if (m_pWndParam->hInst) {
+        UnregisterClass(m_pWndParam->pszTitle, m_pWndParam->hInst);
+        m_pWndParam->hInst = NULL;
+    }
 }
