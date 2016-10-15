@@ -1,6 +1,13 @@
 #include "stdafx.h"
 #include "GameOGL.h"
 
+#define SET_ERROR_AND_RETURN_FALSE(EC, EMF, ...) \
+    do { m_pErrorHandler->SetError(EC, _T(EMF), __VA_ARGS__); return false; } while(false)
+
+#define DESTROY_SET_ERROR_RETURN_FALSE(EC, EMF, ...) \
+    DestroyWnd(); \
+    SET_ERROR_AND_RETURN_FALSE(EC, EMF, __VA_ARGS__)
+
 GameOGL::GameOGL(ErrorHandler * pErrorHandler)
     : m_bQuit(false),
     m_bActive(true),
@@ -35,11 +42,10 @@ GameOGL::~GameOGL() {
 bool GameOGL::Create(WndParam * pWndParam) {
 
     if (pWndParam->iHeight <= 0 || pWndParam->iWidth <= 0 || pWndParam->iRefreshRate <= 0) {
-        m_pErrorHandler->SetError(EC_Error, _T("Invalid parameters\n"
+        SET_ERROR_AND_RETURN_FALSE(EC_Error, "Invalid parameters\n"
             "Width        = %d\n"
             "Height       = %d\n"
-            "Refresh Rate = %d\n"), pWndParam->iWidth, pWndParam->iHeight, pWndParam->iRefreshRate);
-        return false;
+            "Refresh Rate = %d\n", pWndParam->iWidth, pWndParam->iHeight, pWndParam->iRefreshRate);
     }
 
     m_pWndParam = pWndParam;
@@ -60,8 +66,7 @@ bool GameOGL::Create(WndParam * pWndParam) {
     m_WndClassEx.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
     if (!RegisterClassEx(&m_WndClassEx)) {
         pWndParam->hInst = NULL;
-        m_pErrorHandler->SetError(EC_Windows, _T("Cannot register %s with Windows"), m_WndClassEx.lpszClassName);
-        return false;
+        SET_ERROR_AND_RETURN_FALSE(EC_Windows, "Cannot register %s with Windows", m_WndClassEx.lpszClassName);
     }
 
     DWORD dwStyle, dwExStyle;
@@ -93,17 +98,13 @@ bool GameOGL::Create(WndParam * pWndParam) {
         (LPVOID)this);
 
     if (pWndParam->hWnd == NULL) {
-        DestroyWnd();
-        m_pErrorHandler->SetError(EC_Windows, _T("Cannot create window."));
-        return false;
+        DESTROY_SET_ERROR_RETURN_FALSE(EC_Windows, "Cannot create window.");
     }
 
     pWndParam->hDC = GetDC(pWndParam->hWnd);
 
     if (pWndParam->hDC == NULL) {
-        DestroyWnd();
-        m_pErrorHandler->SetError(EC_Windows, _T("Could not get window's DC."));
-        return false;
+        DESTROY_SET_ERROR_RETURN_FALSE(EC_Windows, "Could not get window's DC.");
     }
 
     // Center window onscreen if it is a window
@@ -135,14 +136,49 @@ bool GameOGL::Create(WndParam * pWndParam) {
 
     int iPixelFormat = ChoosePixelFormat(pWndParam->hDC, &pfd);
     if (!iPixelFormat) {
-        DestroyWnd();
-        m_pErrorHandler->SetError(EC_OpenGL, _T("Could not find suitable OpenGL pixel format to use."));
-        return false;
+        DESTROY_SET_ERROR_RETURN_FALSE(EC_OpenGL, "Could not find suitable OpenGL pixel format to use.");
     }
 
     if (!SetPixelFormat(pWndParam->hDC, iPixelFormat, &pfd)) {
-
+        DESTROY_SET_ERROR_RETURN_FALSE(EC_OpenGL, "Could not set OpenGL pixel format.");
     }
+
+    m_hGLRC = wglCreateContext(pWndParam->hDC);
+    if (m_hGLRC = NULL) {
+        DESTROY_SET_ERROR_RETURN_FALSE(EC_OpenGL, "Could not create OpenGL context.");
+    }
+    if (!wglMakeCurrent(pWndParam->hDC, m_hGLRC)) {
+        DESTROY_SET_ERROR_RETURN_FALSE(EC_OpenGL, "Could not make current OpenGL context.");
+    }
+
+    // Obtain detailed information about the device context's pixel format
+    if (!DescribePixelFormat(pWndParam->hDC, iPixelFormat, sizeof(pfd), &pfd)) {
+        DESTROY_SET_ERROR_RETURN_FALSE(EC_OpenGL, "Could not get information about selected pixel format.");
+    }
+
+    pWndParam->b32Bit = pfd.cColorBits == 32;
+    pWndParam->bZBuffer = pfd.cDepthBits > 0;
+
+    // Create appropriate window
+    if (pWndParam->bIsFullScreen) {
+        DEVMODE dmScreenSettings;
+        memset(&dmScreenSettings, 0, sizeof(DEVMODE));
+
+        dmScreenSettings.dmSize = sizeof(DEVMODE);
+        dmScreenSettings.dmPelsWidth = pWndParam->iWidth;
+        dmScreenSettings.dmPelsHeight = pWndParam->iHeight;
+        dmScreenSettings.dmBitsPerPel = pfd.cColorBits;
+        dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+
+        if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) {
+            DESTROY_SET_ERROR_RETURN_FALSE(EC_Windows, "Failed to switch to %dx%d fullscreen mode.", pWndParam->iWidth, pWndParam->iHeight);
+        }
+    }
+
+    ShowWindow(pWndParam->hWnd, SW_SHOW);
+    SetForegroundWindow(pWndParam->hWnd);
+    SetFocus(pWndParam->hWnd);
+    UpdateWindow(pWndParam->hWnd);
 
     return true;
 }
