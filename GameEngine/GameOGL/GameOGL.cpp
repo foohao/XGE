@@ -204,3 +204,15 @@ double GameOGL::GetTimePerformanceRegular(void) {
 
     return dDeltaTime;
 }
+
+// Convert a number range from 0 to 255 to a number range from 0 to 1
+float GameOGL::ConvertColor(int iColor) {
+    if (iColor >= 255) {
+        return 1.f;
+    } else if (iColor <= 0) {
+        return 0.f;
+    } else {
+        return float(iColor) / 255.f;
+    }
+    return 0.0f;
+}
