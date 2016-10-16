@@ -340,6 +340,13 @@ void GameOGL::Initialize() {
     return;
 }
 
+void GameOGL::CleanUp() {
+
+    if (m_pErrorHandler->GetErrorCode != EC_NoError) {
+        m_pErrorHandler->ShowErrorMessage();
+    }
+}
+
 void GameOGL::DestroyWnd() {
 
     // Reset screen mode back to desktop settings
