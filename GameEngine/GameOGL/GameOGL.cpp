@@ -243,6 +243,20 @@ void GameOGL::CountFPS(double dDeltaTime) {
     ++loops;
 }
 
+// Display the FPS on the title bar until the font engine is built
+bool GameOGL::DisplayFPSinTitle() {
+    
+    static TCHAR szFPS[20];
+    _stprintf_s(szFPS, 20, _T("%2.0f FPS"), m_fFPS);
+
+    static size_t uTitleLen = _tcslen(m_pszTitle) + 22;
+    static PTCH pszTitle = new TCHAR[uTitleLen];
+    _stprintf_s(pszTitle, uTitleLen, _T("%s %s"), m_pszTitle, szFPS);
+    SetWindowText(m_hWnd, pszTitle);
+
+    return true;
+}
+
 LRESULT GameOGL::WndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     static GameOGL *pWnd = NULL;
     static bool bProcessed = false;
