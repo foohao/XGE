@@ -434,3 +434,14 @@ bool GameOGL::RenderPost() {
 
     return SwapBuffers(m_hDC);
 }
+
+void GameOGL::WndFocusReceived() {
+
+    if (m_GameState == GS_PAUSE) {
+        m_GameState = GS_PLAY;
+    }
+}
+
+void GameOGL::WndFocusLost() {
+    m_GameState = GS_PAUSE;
+}
