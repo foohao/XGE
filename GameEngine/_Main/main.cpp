@@ -36,7 +36,7 @@ int WINAPI _tWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPTSTR lpCmdLine, int
     // Unique start of this game
     if (myGame.Create(&wndParam)) {
         // Start the game
-        iReturn = myGame.StartMessageLoop();
+        iReturn = myGame.StartMsgLoop();
     } else {
         errorHandler.ShowErrorMessage();
         iReturn = -1;

@@ -17,8 +17,6 @@ struct WndParam {
     bool b32Bit;
     bool bZBuffer;
 
-    HWND      hWnd;
-    HDC       hDC;
     HINSTANCE hInst;
 
     WndParam(PTCH szTitle, HINSTANCE hInst)
@@ -30,8 +28,6 @@ struct WndParam {
         bWindowed(true),
         b32Bit(true),
         bZBuffer(true),
-        hWnd(NULL),
-        hDC(NULL),
         hInst(hInst) {
 
     }

@@ -20,9 +20,9 @@ public:
     GameOGL(ErrorHandler * pErrorHandler);
     virtual ~GameOGL();
 
-    bool Create(WndParam *pWndParam);
+    bool Create(const WndParam *pWndParam);
 
-    int StartMessageLoop();
+    int StartMsgLoop();
 
 protected:
 
@@ -56,14 +56,26 @@ private:
     bool m_bActive;
     GameState m_GameState;
 
-    WndParam *m_pWndParam;
-
     double m_dTimeScaleFactor;
     long long m_lPrevTime;
     long long m_lCurrentTime;
     float m_fFPS;
     double m_dTimeGame;
     double m_dTimeDelta;
+
+    // Window parameters
+    PTCH m_pszTitle;
+    INT m_iWidth;
+    INT m_iHeight;
+    bool m_bIsFullScreen;
+    INT m_iRefreshRate;
+    bool m_bWindowed;
+    bool m_b32Bit;
+    bool m_bZBuffer;
+
+    HWND      m_hWnd;
+    HDC       m_hDC;
+    HINSTANCE m_hInst;
 
     WNDCLASSEX m_WndClassEx;
     MSG m_Msg;

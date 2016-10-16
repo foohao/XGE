@@ -12,14 +12,6 @@ GameOGL::GameOGL(ErrorHandler * pErrorHandler)
     : m_bQuit(false),
     m_bActive(true),
     m_GameState(GS_STOP),
-
-    m_pWndParam(NULL),
-
-    m_fFPS(60),
-    m_dTimeGame(0),
-
-    m_hGLRC(NULL),
-
     m_pErrorHandler(pErrorHandler) {
 
     // Define function pointer to GetDeltaTime
@@ -39,16 +31,27 @@ GameOGL::~GameOGL() {
     DestroyWnd();
 }
 
-bool GameOGL::Create(WndParam * pWndParam) {
+bool GameOGL::Create(const WndParam * pWndParam) {
 
     if (pWndParam->iHeight <= 0 || pWndParam->iWidth <= 0 || pWndParam->iRefreshRate <= 0) {
         SET_ERROR_AND_RETURN_FALSE(EC_Error, "Invalid parameters\n"
-            "Width        = %d\n"
-            "Height       = %d\n"
-            "Refresh Rate = %d\n", pWndParam->iWidth, pWndParam->iHeight, pWndParam->iRefreshRate);
+                                   "Width        = %d\n"
+                                   "Height       = %d\n"
+                                   "Refresh Rate = %d\n", pWndParam->iWidth, pWndParam->iHeight, pWndParam->iRefreshRate);
     }
 
-    m_pWndParam = pWndParam;
+
+    m_pszTitle = pWndParam->pszTitle;
+    m_iWidth = pWndParam->iWidth;
+    m_iHeight = pWndParam->iHeight;
+    m_bIsFullScreen = pWndParam->bIsFullScreen;
+    m_iRefreshRate = pWndParam->iRefreshRate;
+    m_bWindowed = pWndParam->bWindowed;
+    m_b32Bit = pWndParam->b32Bit;
+    m_bZBuffer = pWndParam->bZBuffer;
+
+    m_hInst = pWndParam->hInst;
+
     m_fFPS = pWndParam->iRefreshRate;
 
     // Register window class
@@ -57,20 +60,19 @@ bool GameOGL::Create(WndParam * pWndParam) {
     m_WndClassEx.lpfnWndProc = WndProc;
     m_WndClassEx.cbClsExtra = 0;
     m_WndClassEx.cbWndExtra = 0;
-    m_WndClassEx.hInstance = pWndParam->hInst;
+    m_WndClassEx.hInstance = m_hInst;
     m_WndClassEx.hIcon = LoadIcon(NULL, IDI_WINLOGO);
     m_WndClassEx.hCursor = LoadCursor(NULL, IDC_ARROW);
     m_WndClassEx.hbrBackground = NULL;
     m_WndClassEx.lpszMenuName = NULL;
-    m_WndClassEx.lpszClassName = pWndParam->pszTitle;
+    m_WndClassEx.lpszClassName = m_pszTitle;
     m_WndClassEx.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
     if (!RegisterClassEx(&m_WndClassEx)) {
-        pWndParam->hInst = NULL;
         SET_ERROR_AND_RETURN_FALSE(EC_Windows, "Cannot register %s with Windows", m_WndClassEx.lpszClassName);
     }
 
     DWORD dwStyle, dwExStyle;
-    if (pWndParam->bIsFullScreen) {
+    if (m_bIsFullScreen) {
         dwStyle = WS_POPUP | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX;
         dwExStyle = WS_EX_APPWINDOW;
     } else {
@@ -80,47 +82,47 @@ bool GameOGL::Create(WndParam * pWndParam) {
 
     RECT rcWnd;
     rcWnd.left = 0;
-    rcWnd.right = pWndParam->iWidth;
+    rcWnd.right = m_iWidth;
     rcWnd.top = 0;
-    rcWnd.bottom = pWndParam->iHeight;
+    rcWnd.bottom = m_iHeight;
     AdjustWindowRectEx(&rcWnd, dwStyle, FALSE, dwExStyle);
 
-    pWndParam->hWnd = CreateWindowEx(dwExStyle,
-        m_WndClassEx.lpszClassName,
-        m_WndClassEx.lpszClassName,
-        dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-        0, 0,
-        rcWnd.right - rcWnd.left,
-        rcWnd.bottom - rcWnd.top,
-        NULL,
-        NULL,
-        pWndParam->hInst,
-        (LPVOID)this);
+    m_hWnd = CreateWindowEx(dwExStyle,
+                                     m_WndClassEx.lpszClassName,
+                                     m_WndClassEx.lpszClassName,
+                                     dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                                     0, 0,
+                                     rcWnd.right - rcWnd.left,
+                                     rcWnd.bottom - rcWnd.top,
+                                     NULL,
+                                     NULL,
+                                     m_hInst,
+                                     (LPVOID)this);
 
-    if (pWndParam->hWnd == NULL) {
+    if (m_hWnd == NULL) {
         DESTROY_SET_ERROR_RETURN_FALSE(EC_Windows, "Cannot create window.");
     }
 
-    pWndParam->hDC = GetDC(pWndParam->hWnd);
+    m_hDC = GetDC(m_hWnd);
 
-    if (pWndParam->hDC == NULL) {
+    if (m_hDC == NULL) {
         DESTROY_SET_ERROR_RETURN_FALSE(EC_Windows, "Could not get window's DC.");
     }
 
     // Center window onscreen if it is a window
-    if (pWndParam->bWindowed) {
+    if (m_bWindowed) {
         int cx = GetSystemMetrics(SM_CXSCREEN);
         int cy = GetSystemMetrics(SM_CYSCREEN);
         int px = 0;
         int py = 0;
 
-        if (cx > pWndParam->iWidth) {
-            px = int((cx - pWndParam->iWidth) / 2);
+        if (cx > m_iWidth) {
+            px = int((cx - m_iWidth) / 2);
         }
-        if (cy > pWndParam->iHeight) {
-            py = int((cy - pWndParam->iHeight) / 2);
+        if (cy > m_iHeight) {
+            py = int((cy - m_iHeight) / 2);
         }
-        MoveWindow(pWndParam->hWnd, px, py, pWndParam->iWidth, pWndParam->iHeight, FALSE);
+        MoveWindow(m_hWnd, px, py, m_iWidth, m_iHeight, FALSE);
     }
 
     // Define pixel format
@@ -130,57 +132,76 @@ bool GameOGL::Create(WndParam * pWndParam) {
     pfd.nVersion = 1;
     pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
     pfd.iPixelType = PFD_TYPE_RGBA;
-    pfd.cColorBits = pWndParam->b32Bit ? 32 : 16;
+    pfd.cColorBits = m_b32Bit ? 32 : 16;
     pfd.cDepthBits = 16;
     pfd.iLayerType = PFD_MAIN_PLANE;
 
-    int iPixelFormat = ChoosePixelFormat(pWndParam->hDC, &pfd);
+    int iPixelFormat = ChoosePixelFormat(m_hDC, &pfd);
     if (!iPixelFormat) {
         DESTROY_SET_ERROR_RETURN_FALSE(EC_OpenGL, "Could not find suitable OpenGL pixel format to use.");
     }
 
-    if (!SetPixelFormat(pWndParam->hDC, iPixelFormat, &pfd)) {
+    if (!SetPixelFormat(m_hDC, iPixelFormat, &pfd)) {
         DESTROY_SET_ERROR_RETURN_FALSE(EC_OpenGL, "Could not set OpenGL pixel format.");
     }
 
-    m_hGLRC = wglCreateContext(pWndParam->hDC);
+    m_hGLRC = wglCreateContext(m_hDC);
     if (m_hGLRC = NULL) {
         DESTROY_SET_ERROR_RETURN_FALSE(EC_OpenGL, "Could not create OpenGL context.");
     }
-    if (!wglMakeCurrent(pWndParam->hDC, m_hGLRC)) {
+    if (!wglMakeCurrent(m_hDC, m_hGLRC)) {
         DESTROY_SET_ERROR_RETURN_FALSE(EC_OpenGL, "Could not make current OpenGL context.");
     }
 
     // Obtain detailed information about the device context's pixel format
-    if (!DescribePixelFormat(pWndParam->hDC, iPixelFormat, sizeof(pfd), &pfd)) {
+    if (!DescribePixelFormat(m_hDC, iPixelFormat, sizeof(pfd), &pfd)) {
         DESTROY_SET_ERROR_RETURN_FALSE(EC_OpenGL, "Could not get information about selected pixel format.");
     }
 
-    pWndParam->b32Bit = pfd.cColorBits == 32;
-    pWndParam->bZBuffer = pfd.cDepthBits > 0;
+    m_b32Bit = pfd.cColorBits == 32;
+    m_bZBuffer = pfd.cDepthBits > 0;
 
     // Create appropriate window
-    if (pWndParam->bIsFullScreen) {
+    if (m_bIsFullScreen) {
         DEVMODE dmScreenSettings;
         memset(&dmScreenSettings, 0, sizeof(DEVMODE));
 
         dmScreenSettings.dmSize = sizeof(DEVMODE);
-        dmScreenSettings.dmPelsWidth = pWndParam->iWidth;
-        dmScreenSettings.dmPelsHeight = pWndParam->iHeight;
+        dmScreenSettings.dmPelsWidth = m_iWidth;
+        dmScreenSettings.dmPelsHeight = m_iHeight;
         dmScreenSettings.dmBitsPerPel = pfd.cColorBits;
         dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
         if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) {
-            DESTROY_SET_ERROR_RETURN_FALSE(EC_Windows, "Failed to switch to %dx%d fullscreen mode.", pWndParam->iWidth, pWndParam->iHeight);
+            DESTROY_SET_ERROR_RETURN_FALSE(EC_Windows, "Failed to switch to %dx%d fullscreen mode.", m_iWidth, m_iHeight);
         }
     }
 
-    ShowWindow(pWndParam->hWnd, SW_SHOW);
-    SetForegroundWindow(pWndParam->hWnd);
-    SetFocus(pWndParam->hWnd);
-    UpdateWindow(pWndParam->hWnd);
+    ShowWindow(m_hWnd, SW_SHOW);
+    SetForegroundWindow(m_hWnd);
+    SetFocus(m_hWnd);
+    UpdateWindow(m_hWnd);
 
     return true;
+}
+
+int GameOGL::StartMsgLoop() {
+
+    Initialize();
+
+    while (!m_bQuit) {
+        // Get all messages before rendering a frame
+        if (PeekMessage(&m_Msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&m_Msg);
+            DispatchMessage(&m_Msg);
+        } else {
+            Frame();
+        }
+    }
+
+    CleanUp();
+
+    return m_Msg.wParam;
 }
 
 double GameOGL::GetTimePerformanceHigh(void) {
@@ -206,16 +227,15 @@ double GameOGL::GetTimePerformanceRegular(void) {
 }
 
 LRESULT GameOGL::WndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
-    GameOGL *pWnd = NULL;
+    static GameOGL *pWnd = NULL;
     static bool bProcessed = false;
     switch (iMsg) {
     case WM_NCCREATE:
     {
-        SetWindowLong(hWnd, GWL_USERDATA, long(LPCREATESTRUCT(lParam)->lpCreateParams));
+        pWnd = reinterpret_cast<GameOGL*>(lParam);
         break;
     }
     default:
-        pWnd = (GameOGL*)GetWindowLong(hWnd, GWL_USERDATA);
         if (NULL != pWnd) {
             bProcessed = pWnd->MsgHandler(iMsg, wParam, lParam);
         }
@@ -230,9 +250,14 @@ LRESULT GameOGL::WndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 bool GameOGL::MsgHandler(UINT iMsg, WPARAM wParam, LPARAM lParam) {
 
     switch (iMsg) {
+    case WM_QUIT:
+    {
+        m_bQuit = true;
+        return true;
+    }
     case WM_CLOSE:
     {
-        DestroyWindow(m_pWndParam->hWnd);
+        DestroyWindow(m_hWnd);
         return true;
     }
     case WM_DESTROY:
@@ -280,19 +305,50 @@ float GameOGL::ConvertColor(int iColor) {
     return 0.0f;
 }
 
+void GameOGL::Initialize() {
+
+    // Setup projection martix
+    glViewport(0, 0, m_iWidth, m_iHeight);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45.f, float(m_iWidth) / m_iHeight, 0.1f, 1000.f);
+
+    glShadeModel(GL_SMOOTH);
+
+    // Define background color of window
+    m_BGColor.Set(1.f, 1.f, 1.f);
+
+    // Background & depth clear color
+    glClearColor(m_BGColor.fRed, m_BGColor.fGreen, m_BGColor.fBlue);
+    glClearDepth(1.f);
+
+    // Enable depth buffer
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
+    // Make perspective look good if processor time is available
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    glEnable(GL_PERSPECTIVE_CORRECTION_HINT);
+
+    // Enable backface culling
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+
+    m_GameState = GS_PLAY;
+
+    return;
+}
+
 void GameOGL::DestroyWnd() {
 
-    if (!m_pWndParam)
-        return;
-
     // Reset screen mode back to desktop settings
-    if (m_pWndParam->bIsFullScreen) {
+    if (m_bIsFullScreen) {
         ChangeDisplaySettings(NULL, 0);
     }
 
     // Deselect OpenGL rendering context
-    if (m_pWndParam->hDC) {
-        wglMakeCurrent(m_pWndParam->hDC, NULL);
+    if (m_hDC) {
+        wglMakeCurrent(m_hDC, NULL);
     }
 
     // Delete the OpenGL context
@@ -302,18 +358,18 @@ void GameOGL::DestroyWnd() {
     }
 
     // Free memory for DC
-    if (m_pWndParam->hWnd && m_pWndParam->hDC) {
-        ReleaseDC(m_pWndParam->hWnd, m_pWndParam->hDC);
-        m_pWndParam->hDC = NULL;
+    if (m_hWnd && m_hDC) {
+        ReleaseDC(m_hWnd, m_hDC);
+        m_hDC = NULL;
     }
 
-    if (m_pWndParam->hWnd) {
-        DestroyWindow(m_pWndParam->hWnd);
-        m_pWndParam->hWnd = NULL;
+    if (m_hWnd) {
+        DestroyWindow(m_hWnd);
+        m_hWnd = NULL;
     }
 
-    if (m_pWndParam->hInst) {
-        UnregisterClass(m_pWndParam->pszTitle, m_pWndParam->hInst);
-        m_pWndParam->hInst = NULL;
+    if (m_hInst) {
+        UnregisterClass(m_pszTitle, m_hInst);
+        m_hInst = NULL;
     }
 }
