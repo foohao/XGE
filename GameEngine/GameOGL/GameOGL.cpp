@@ -414,3 +414,16 @@ bool GameOGL::UpdateGame(float fDeltaTime) {
 
     return RenderPost();
 }
+
+void GameOGL::RenderPre() {
+
+    if (m_bZBuffer) {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    } else {
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glTranslatef(0.f, 0.f, -4.f);
+}
