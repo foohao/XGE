@@ -399,3 +399,11 @@ void GameOGL::Frame() {
 
     Sleep(1);
 }
+
+bool GameOGL::UpdateGame(float fDeltaTime) {
+    RenderPre();
+
+    // Render stuff here
+
+    return RenderPost();
+}
