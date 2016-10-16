@@ -45,9 +45,9 @@ private:
     void WndFocusReceived();
     void WndFocusLost();
 
-    double (GameOGL::*GetDeltaTime)(void);
-    double GetTimePerformanceHigh(void);
-    double GetTimePerformanceRegular(void);
+    double (*GetDeltaTime)();
+    double GetTimePerformanceHigh();
+    double GetTimePerformanceRegular();
 
     void CountFPS(double dDeltaTime);
     bool DisplayFPSinTitle();

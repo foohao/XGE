@@ -12,6 +12,7 @@ GameOGL::GameOGL(ErrorHandler * pErrorHandler)
     : m_bQuit(false),
     m_bActive(true),
     m_GameState(GS_STOP),
+    m_dTimeGame(0),
     m_pErrorHandler(pErrorHandler) {
 
     // Define function pointer to GetDeltaTime
@@ -19,11 +20,11 @@ GameOGL::GameOGL(ErrorHandler * pErrorHandler)
     if (QueryPerformanceFrequency((LARGE_INTEGER*)&lPerformanceFrequency)) {
         QueryPerformanceCounter((LARGE_INTEGER*)&m_lPrevTime);
         m_dTimeScaleFactor = 1.0 / lPerformanceFrequency;
-        GetDeltaTime = GameOGL::GetTimePerformanceHigh;
+        GetDeltaTime = this->GetTimePerformanceHigh;
     } else {
         m_lPrevTime = timeGetTime();
         m_dTimeScaleFactor = 0.001;
-        GetDeltaTime = GameOGL::GetTimePerformanceRegular;
+        GetDeltaTime = this->GetTimePerformanceRegular;
     }
 }
 
@@ -372,4 +373,29 @@ void GameOGL::DestroyWnd() {
         UnregisterClass(m_pszTitle, m_hInst);
         m_hInst = NULL;
     }
+}
+
+void GameOGL::Frame() {
+
+    // If window is in focus, run the game
+    if (m_GameState == GS_PLAY) {
+        // Get time elapsed since last frame update
+        m_dTimeDelta = GetDeltaTime();
+
+        if (m_dTimeDelta > 0.25) {
+            m_dTimeDelta = 0.25;
+        }
+
+        m_dTimeGame += m_dTimeDelta;
+
+        if (!UpdateGame(float(m_dTimeDelta))) {
+            m_bQuit = true;
+            return;
+        } 
+    }
+
+    CountFPS(m_dTimeDelta);
+    DisplayFPSinTitle();
+
+    Sleep(1);
 }
