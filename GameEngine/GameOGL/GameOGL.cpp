@@ -227,6 +227,22 @@ double GameOGL::GetTimePerformanceRegular(void) {
     return dDeltaTime;
 }
 
+void GameOGL::CountFPS(double dDeltaTime) {
+
+    static double dTotalTime = 0;
+    static int loops = 0;
+
+    dTotalTime += dDeltaTime;
+    if (dTotalTime > 0.5) {
+        m_fFPS = loops / dTotalTime;
+
+        // reset
+        loops = 0;
+        dTotalTime = 0;
+    }
+    ++loops;
+}
+
 LRESULT GameOGL::WndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     static GameOGL *pWnd = NULL;
     static bool bProcessed = false;
