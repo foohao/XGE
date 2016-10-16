@@ -427,3 +427,10 @@ void GameOGL::RenderPre() {
     glLoadIdentity();
     glTranslatef(0.f, 0.f, -4.f);
 }
+
+bool GameOGL::RenderPost() {
+
+    glFlush();
+
+    return SwapBuffers(m_hDC);
+}
