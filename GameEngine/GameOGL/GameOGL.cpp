@@ -227,6 +227,47 @@ LRESULT GameOGL::WndProc(HWND hWnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
+bool GameOGL::MsgHandler(UINT iMsg, WPARAM wParam, LPARAM lParam) {
+
+    switch (iMsg) {
+    case WM_CLOSE:
+    {
+        DestroyWindow(m_pWndParam->hWnd);
+        return true;
+    }
+    case WM_DESTROY:
+    {
+        PostQuitMessage(0);
+        return true;
+    }
+    case WM_ACTIVATE:
+    {
+        if (LOWORD(wParam) == WA_INACTIVE) {
+            m_bActive = false;
+            WndFocusLost();
+        } else {
+            m_bActive = true;
+            WndFocusReceived();
+        }
+        return true;
+    }
+    case WM_SYSCOMMAND:
+    {
+        switch (wParam) {
+        case SC_SCREENSAVE:
+        case SC_MONITORPOWER:
+        {
+            return true;
+        }
+        default:
+            return false;
+        }
+    }
+    default:
+        return false;
+    }
+}
+
 // Convert a number range from 0 to 255 to a number range from 0 to 1
 float GameOGL::ConvertColor(int iColor) {
     if (iColor >= 255) {
