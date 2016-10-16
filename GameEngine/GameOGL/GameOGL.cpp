@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GameOGL.h"
+using std::function;
 
 #define SET_ERROR_AND_RETURN_FALSE(EC, EMF, ...) \
     do { m_pErrorHandler->SetError(EC, _T(EMF), __VA_ARGS__); return false; } while(false)
@@ -20,11 +21,11 @@ GameOGL::GameOGL(ErrorHandler * pErrorHandler)
     if (QueryPerformanceFrequency((LARGE_INTEGER*)&lPerformanceFrequency)) {
         QueryPerformanceCounter((LARGE_INTEGER*)&m_lPrevTime);
         m_dTimeScaleFactor = 1.0 / lPerformanceFrequency;
-        GetDeltaTime = this->GetTimePerformanceHigh;
+        GetDeltaTime = std::bind(&GameOGL::GetTimePerformanceHigh, this);
     } else {
         m_lPrevTime = timeGetTime();
         m_dTimeScaleFactor = 0.001;
-        GetDeltaTime = this->GetTimePerformanceRegular;
+        GetDeltaTime = std::bind(&GameOGL::GetTimePerformanceRegular, this);
     }
 }
 

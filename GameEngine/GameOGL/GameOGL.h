@@ -2,6 +2,7 @@
 #define GAMEOGL_H
 
 #include "Core.h"
+#include <functional>
 
 struct ColorOGL {
     float fRed;
@@ -45,7 +46,7 @@ private:
     void WndFocusReceived();
     void WndFocusLost();
 
-    double (*GetDeltaTime)();
+    std::function<double(void)> GetDeltaTime;
     double GetTimePerformanceHigh();
     double GetTimePerformanceRegular();
 
