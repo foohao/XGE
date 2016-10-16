@@ -54,7 +54,7 @@ bool GameOGL::Create(const WndParam * pWndParam) {
 
     m_hInst = pWndParam->hInst;
 
-    m_fFPS = pWndParam->iRefreshRate;
+    m_fFPS = float(pWndParam->iRefreshRate);
 
     // Register window class
     m_WndClassEx.cbSize = sizeof(WNDCLASSEX);
@@ -235,7 +235,7 @@ void GameOGL::CountFPS(double dDeltaTime) {
 
     dTotalTime += dDeltaTime;
     if (dTotalTime > 0.5) {
-        m_fFPS = loops / dTotalTime;
+        m_fFPS = float(loops / dTotalTime);
 
         // reset
         loops = 0;
@@ -463,7 +463,7 @@ bool GameOGL::RenderPost() {
 
     glFlush();
 
-    return SwapBuffers(m_hDC);
+    return SwapBuffers(m_hDC) ? true : false;
 }
 
 void GameOGL::WndFocusReceived() {
